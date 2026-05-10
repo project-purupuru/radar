@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && pnpm copy-idl",
+    "copy-idl": "node -e \"const{mkdirSync,copyFileSync}=require('node:fs');mkdirSync('dist/idl',{recursive:true});copyFileSync('src/idl/purupuru_anchor.json','dist/idl/purupuru_anchor.json');\"",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
