@@ -14,10 +14,10 @@
  * indicate the RPC is unhealthy and a reconnect is warranted.
  */
 
-import type { Connection } from "@solana/web3.js";
-import { createConnection, disconnect, type LogsSubscription, subscribeToLogs } from "./client.js";
-import * as health from "./health.js";
 import type { Idl } from "@coral-xyz/anchor";
+import type { Connection } from "@solana/web3.js";
+import { type LogsSubscription, createConnection, disconnect, subscribeToLogs } from "./client.js";
+import * as health from "./health.js";
 
 const HEARTBEAT_INTERVAL_MS = 20_000;
 const DEAD_MAN_THRESHOLD_MS = 60_000;
@@ -57,12 +57,15 @@ function makeSleep(deps: SleepDeps = {}) {
   return (ms: number, signal: { cancelled: boolean }) =>
     new Promise<void>((resolve) => {
       const t = set(() => resolve(), ms);
-      const tick = set(() => {
-        if (signal.cancelled) {
-          clr(t);
-          resolve();
-        }
-      }, Math.min(ms, 50));
+      const tick = set(
+        () => {
+          if (signal.cancelled) {
+            clr(t);
+            resolve();
+          }
+        },
+        Math.min(ms, 50),
+      );
       void tick;
     });
 }
@@ -85,8 +88,7 @@ export interface StartLivenessLoopParams {
 
 export function startLivenessLoop(params: StartLivenessLoopParams): LivenessHandle {
   const sleep = params.sleep ?? makeSleep();
-  const realGetSlot =
-    params.getSlot ?? ((conn: Connection) => conn.getSlot("confirmed"));
+  const realGetSlot = params.getSlot ?? ((conn: Connection) => conn.getSlot("confirmed"));
   const realCreateConn = params.createConnection ?? createConnection;
   const realSubscribe =
     params.subscribeToLogs ??
@@ -123,7 +125,10 @@ export function startLivenessLoop(params: StartLivenessLoopParams): LivenessHand
     state.connection = newConn;
     state.subscription = newSub;
     state.lastSlotAt = Date.now();
-    state.lastSeenSlot = null;
+    // NOTE: don't clear lastSeenSlot — if we did, the next heartbeat would
+    // treat the same-slot RPC response as "advancing" and reset
+    // backoffIndex, defeating the bounded-backoff schedule. Keep the
+    // observed slot; the dead-man timer is what matters for liveness.
     health.setConnected(true);
   }
 
@@ -136,10 +141,7 @@ export function startLivenessLoop(params: StartLivenessLoopParams): LivenessHand
           state.lastSlotAt = Date.now();
           state.backoffIndex = 0;
           health.setConnected(true);
-        } else if (
-          state.lastSlotAt != null &&
-          Date.now() - state.lastSlotAt > deadManMs
-        ) {
+        } else if (state.lastSlotAt != null && Date.now() - state.lastSlotAt > deadManMs) {
           await triggerReconnect();
         }
       } catch (err) {
