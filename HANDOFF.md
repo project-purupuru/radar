@@ -28,9 +28,9 @@ Branch: `feature/v0-indexer` (5 commits ahead of `main`). Consolidated PR draft 
 
 | Task | Why blocked |
 |---|---|
-| **A5** Railway plan tier confirmation | Needs zerker login to railway.app. Runbook (`docs/RAILWAY_PROCEDURE.md` §2) walks through it. |
+| ~~**A5**~~ Railway plan tier | ✅ **Closed 2026-05-10**: Pro tier confirmed. No sleep behavior. R-15a fully mitigated. |
 | **G1** Railway service create + initial deploy | Needs zerker Railway auth. Runbook §1 has the full first-deploy steps. |
-| **G2** UptimeRobot setup | Conditional on A5 → if Free/Hobby. Runbook §2. |
+| ~~**G2**~~ UptimeRobot setup | ✅ **Skipped 2026-05-10**: Pro tier doesn't sleep, no monitor needed. |
 | **G3** Devnet rate-limit headroom probe | Needs the deployed service running for 30 min. After G1. |
 | **G4** T-1 dry-run | Needs zksoju to trigger a fresh devnet claim. Coordinate 2026-05-10 afternoon. |
 | **G5** Manual WS-kill recovery test | Tweak `SOLANA_WS_URL` to broken endpoint on Railway, verify recovery. After G1. |
@@ -46,9 +46,8 @@ Branch: `feature/v0-indexer` (5 commits ahead of `main`). Consolidated PR draft 
    git push -u origin feature/v0-indexer
    gh pr view  # auto-created or use `gh pr create`
    ```
-2. **Complete A5 + G1**: Sign in to Railway, confirm plan tier, deploy the service. Both are walked through in `docs/RAILWAY_PROCEDURE.md`. Estimated 15-30 min.
-3. **G2 (UptimeRobot)** if A5 = Free/Hobby. ~10 min.
-4. **G4 prep**: ping zksoju to confirm 2026-05-10 afternoon availability for T-1 dry-run trigger.
+2. **G1**: Deploy the service to Railway (Pro tier — no UptimeRobot needed). Runbook `docs/RAILWAY_PROCEDURE.md` §1. Estimated 15 min.
+3. **G4 prep**: ping zksoju to confirm 2026-05-10 afternoon availability for T-1 dry-run trigger.
 5. **Re-run A4 spike** after the first live claim (during T-1 dry-run): `pnpm tsx scripts/verify-parser-shape.ts` — verifies Candidate A shape against real EventParser output. If anything mismatches, `src/types.ts:RawStoneClaimed` + `src/adapter.ts` need adjustment before the demo.
 6. **G5 WS-kill test**: after G1, follow runbook §5 Tier 2 to swap `SOLANA_WS_URL` to a broken endpoint, verify the reconnect loop catches it within ~60s, restore.
 7. **G6 + G.E2E**: 2026-05-11 morning, follow runbook §3 + §7.
@@ -62,7 +61,7 @@ Branch: `feature/v0-indexer` (5 commits ahead of `main`). Consolidated PR draft 
 
 ### Risks newly surfaced this run
 
-- **R-15a confirmed unaddressed**: until A5 + G2 close, Railway sleep is the highest-probability demo-day failure. Free-tier signup at uptimerobot.com is ~5 min if needed.
+- ~~**R-15a**~~: ✅ Mitigated by Pro tier (confirmed 2026-05-10) — Railway doesn't sleep on Pro.
 - **R-16 still partial**: A4 couldn't validate against a live event. The runtime guard in `src/adapter.ts` catches drift loudly but only after a real event fires. Re-run A4 at T-1.
 
 ---
