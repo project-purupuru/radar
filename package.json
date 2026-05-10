@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && pnpm copy-idl",
+    "copy-idl": "node -e \"const{mkdirSync,copyFileSync}=require('node:fs');mkdirSync('dist/idl',{recursive:true});copyFileSync('src/idl/purupuru_anchor.json','dist/idl/purupuru_anchor.json');\"",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -21,11 +22,13 @@
     "@coral-xyz/anchor": "^0.30.1",
     "@hono/node-server": "^1.13.7",
     "@solana/web3.js": "^1.98.0",
-    "hono": "^4.6.14"
+    "hono": "^4.6.14",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.10.0",
+    "@types/pg": "^8.20.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.0",
     "vitest": "^2.1.8"

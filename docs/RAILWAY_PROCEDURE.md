@@ -30,6 +30,7 @@
    INDEXER_PROGRAM_ID=7u27WmTz2hZHvvhL89XcSCY3eFhxEfHjUN5MjzMY6v38
    LOG_LEVEL=info
    CORS_ORIGIN=*
+   # DATABASE_URL — auto-injected by Railway when you add a Postgres service (see "Adding the optional Postgres service" below). Leave unset for ring-buffer-only mode.
    ```
    (Set `CORS_ORIGIN` to observatory's Vercel URL for prod lockdown later.)
 6. **Deploy** → wait ~2-3 min for build + boot
@@ -46,6 +47,25 @@
 ```
 
 If you see `[radar] listening` but never `[radar] subscription confirmed` within 10s, the indexer subscription failed — check RPC URLs + IDL provenance.
+
+### Adding the optional Postgres service (DB-1, 2026-05-10 scope amendment)
+
+If you want mid-flight resilience (events survive radar restart / Railway redeploy / Helius env-flag swap):
+
+1. In your Railway project: **+ New → Database → Add Postgres**
+2. Railway auto-injects `DATABASE_URL` into the radar service (no manual setup)
+3. Redeploy radar — first boot creates the `mint_activity` table via `CREATE TABLE IF NOT EXISTS`
+4. Verify via `curl https://<radar-url>/health | jq '.dbConnected'` — should return `true`
+
+**Behavior with vs without DB:**
+
+| `DATABASE_URL` | `/health.dbConnected` | What happens |
+|---|---|---|
+| unset | `false` | Ring-buffer-only mode. If radar restarts, in-flight events for the gap are lost. |
+| set + DB up | `true` | Every accepted event is persisted. Ring buffer hydrates from last 200 DB rows on boot. |
+| set + DB down | `false` | radar stays up; events flow through the ring buffer; DB writes log + retry on next event. **API stays green.** |
+
+The DB is BACKUP only. `/events/recent` always reads from the in-memory ring buffer. DB exists purely so the buffer survives a process restart.
 
 ---
 
