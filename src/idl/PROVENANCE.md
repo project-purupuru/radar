@@ -30,6 +30,26 @@ pub struct StoneClaimed {
 
 Element + weather are validated in-program with `require!((1..=5).contains(&element))`, confirming byte values 1-5 per the wuxing scale (1=Wood, 2=Fire, 3=Earth, 4=Metal, 5=Water).
 
+### A4 spike status (2026-05-09 evening · sprint task A4 hard gate)
+
+**Spike script written** at `scripts/verify-parser-shape.ts`. Run on 2026-05-09 evening against devnet (`api.devnet.solana.com`) — `getSignaturesForAddress` returned 5 signatures: 3 program upgrade/deploy ops, 1 program-extension, and 1 `VerifySignedMessage` instruction call. **No `StoneClaimed` event has fired on devnet yet** — `EventParser.parseLogs` could not be executed against a real event.
+
+This means A4 **cannot be definitively verified until the first live claim event arrives** (planned for sprint task G4 T-1 dry-run on 2026-05-10 afternoon, when zksoju triggers a test claim). Until then, B-phase code is built against:
+
+1. **A3 confirmation** (`element: u8`, simple struct per Rust source)
+2. **Anchor 0.30.1 IDL/EventParser conventions** (pubkey fields decode to `web3.PublicKey`-shaped objects, u8 fields decode to `number`)
+3. **A defensive runtime guard** in `src/adapter.ts` — throws if `typeof element !== 'number'` or `element < 1 || element > 5`, surfacing any drift loudly rather than silently corrupting downstream state
+
+After G4 fires the first live event, re-run `scripts/verify-parser-shape.ts` and update this section with the actual EventParser output shape. If it differs from assumed Candidate A, B1 + B3 + tests adjust before demo recording.
+
+**A4 status: PARTIAL · re-validate at G4 · proceed at own risk to Phase B with adapter runtime guard.**
+
+### A3 spike resolution (2026-05-09 evening · sprint task A3)
+
+**`element` field is `u8` in the vendored IDL (line 30 of `purupuru_anchor.json`)**, NOT a struct-tagged Anchor enum. Adapter follows **Candidate A** shape per `sdd.md` §4 — `RawStoneClaimed.element` typed as raw `number` (1..5), `ELEMENT_BY_BYTE` map decodes to TypeScript `Element` union. Adapter throws on bytes outside `1..=5` to surface IDL drift loudly.
+
+If a future re-vendor (e.g., `anchor build` from substrate-side) reveals an enum-typed `element`, B1 (`src/types.ts`) + B3 (`src/adapter.ts`) must be reshaped to **Candidate B** before Phase B locks. This is the R-16 risk; A4 verifies the actual EventParser output to confirm at runtime.
+
 ## Discriminator computation
 
 The event discriminator is the first 8 bytes of `sha256("event:StoneClaimed")`:
