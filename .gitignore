@@ -26,3 +26,11 @@ coverage/
 .claude/checksums.json
 .loa-state/
 .claude.backup.*
+
+# Beads — keep issues.jsonl (source of truth), drop SQLite cache + ephemerals
+.beads/beads.db
+.beads/last-touched
+
+# Run mode + analytics ephemerals
+.run/
+grimoires/loa/analytics/

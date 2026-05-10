@@ -105,10 +105,7 @@ export async function subscribeToLogs(
   return { subscriptionId, programId };
 }
 
-export async function disconnect(
-  connection: Connection,
-  sub: LogsSubscription,
-): Promise<void> {
+export async function disconnect(connection: Connection, sub: LogsSubscription): Promise<void> {
   try {
     await connection.removeOnLogsListener(sub.subscriptionId);
   } catch (err) {

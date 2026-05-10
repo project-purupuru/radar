@@ -21,7 +21,11 @@ export const ELEMENT_BY_BYTE: Readonly<Record<number, Element>> = Object.freeze(
   5: "water",
 });
 
-function decodeElement(byte: unknown, fieldName: "element" | "weather", signature: string): Element {
+function decodeElement(
+  byte: unknown,
+  fieldName: "element" | "weather",
+  signature: string,
+): Element {
   if (typeof byte !== "number" || !Number.isInteger(byte)) {
     throw new Error(
       `[adapter] ${fieldName} is not a number (got ${typeof byte} ${JSON.stringify(byte)}) ` +

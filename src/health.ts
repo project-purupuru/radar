@@ -9,8 +9,7 @@
 
 import type { IndexerHealth } from "./types.js";
 
-const VERSION =
-  process.env.npm_package_version ?? process.env.RADAR_VERSION ?? "0.1.0";
+const VERSION = process.env.npm_package_version ?? process.env.RADAR_VERSION ?? "0.1.0";
 
 interface MutableHealthState {
   indexerStarted: boolean;
