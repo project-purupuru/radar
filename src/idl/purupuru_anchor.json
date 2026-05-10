@@ -1,0 +1,44 @@
+{
+  "address": "7u27WmTz2hZHvvhL89XcSCY3eFhxEfHjUN5MjzMY6v38",
+  "metadata": {
+    "name": "purupuru_anchor",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "purupuru anchor program · awareness-layer-spine v0 · DRAFT IDL hand-derived from src/lib.rs · see PROVENANCE.md"
+  },
+  "instructions": [],
+  "accounts": [],
+  "events": [
+    {
+      "name": "StoneClaimed",
+      "discriminator": [138, 131, 241, 101, 8, 187, 119, 216]
+    }
+  ],
+  "errors": [],
+  "types": [
+    {
+      "name": "StoneClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "element",
+            "type": "u8"
+          },
+          {
+            "name": "weather",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}
