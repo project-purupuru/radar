@@ -57,9 +57,11 @@ program — produces no `StoneClaimed` events but won't error).
 | Endpoint | Returns |
 |---|---|
 | `GET /` | text banner |
-| `GET /health` | `IndexerHealth` — `{ status, service, version, indexerStarted, lastEventAt, count, connected, mode }` |
+| `GET /health` | `IndexerHealth` — `{ status, service, version, indexerStarted, lastEventAt, count, connected, mode, dbConnected }` |
 | `GET /events/recent?limit=N` | `{ events: MintActivity[] }` newest-first, `limit` defaults to 50, clamps at `BUFFER_SIZE=200` |
 | `GET /events/count` | `{ count, bufferSize }` raw counter (includes dedup-rejects) + current buffer occupancy |
+
+`dbConnected` is `false` in ring-buffer-only mode (no `DATABASE_URL`) and `true`/`false` reflecting last-known Postgres state when the optional DB is wired (see [docs/RAILWAY_PROCEDURE.md](docs/RAILWAY_PROCEDURE.md) §1).
 
 ### Local smoke (sprint task E1)
 

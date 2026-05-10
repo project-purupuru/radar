@@ -46,7 +46,7 @@ Branch: `feature/v0-indexer` (5 commits ahead of `main`). Consolidated PR draft 
    git push -u origin feature/v0-indexer
    gh pr view  # auto-created or use `gh pr create`
    ```
-2. **G1**: Deploy the service to Railway (Pro tier — no UptimeRobot needed). Runbook `docs/RAILWAY_PROCEDURE.md` §1. Estimated 15 min.
+2. **G1**: Deploy the service to Railway (Pro tier — no UptimeRobot needed). Runbook `docs/RAILWAY_PROCEDURE.md` §1. Estimated 15 min. **Add Postgres** (one click in Railway: + New → Database → Postgres) — `DATABASE_URL` auto-injects, schema bootstraps at first boot. See runbook §1 "Adding the optional Postgres service."
 3. **G4 prep**: ping zksoju to confirm 2026-05-10 afternoon availability for T-1 dry-run trigger.
 5. **Re-run A4 spike** after the first live claim (during T-1 dry-run): `pnpm tsx scripts/verify-parser-shape.ts` — verifies Candidate A shape against real EventParser output. If anything mismatches, `src/types.ts:RawStoneClaimed` + `src/adapter.ts` need adjustment before the demo.
 6. **G5 WS-kill test**: after G1, follow runbook §5 Tier 2 to swap `SOLANA_WS_URL` to a broken endpoint, verify the reconnect loop catches it within ~60s, restore.

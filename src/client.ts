@@ -15,6 +15,7 @@
 import { BorshCoder, EventParser, type Idl } from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { stoneClaimedToMintActivity } from "./adapter.js";
+import { insertActivity } from "./db.js";
 import * as health from "./health.js";
 import { pushIfNew } from "./ring-buffer.js";
 import type { RawStoneClaimed } from "./types.js";
@@ -85,7 +86,13 @@ export async function subscribeToLogs(
               blockTime,
             });
             const accepted = pushIfNew(activity);
-            if (accepted) health.recordEvent(new Date(activity.blockTime));
+            if (accepted) {
+              health.recordEvent(new Date(activity.blockTime));
+              // Fire-and-forget DB persistence. No-op when DATABASE_URL
+              // is unset; logs + flips dbConnected on failure but never
+              // blocks the ingestion path.
+              void insertActivity(activity);
+            }
           } catch (err) {
             console.error(
               `[client] adapter threw on sig ${signature} logIndex ${logIndex}: ${(err as Error).message}`,

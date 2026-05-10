@@ -17,6 +17,7 @@ interface MutableHealthState {
   count: number;
   connected: boolean;
   mode: "live" | "warmup";
+  dbConnected: boolean | null;
 }
 
 const state: MutableHealthState = {
@@ -25,6 +26,7 @@ const state: MutableHealthState = {
   count: 0,
   connected: false,
   mode: "warmup",
+  dbConnected: null,
 };
 
 function deriveStatus(): IndexerHealth["status"] {
@@ -43,6 +45,7 @@ export function getIndexerHealth(): IndexerHealth {
     count: state.count,
     connected: state.connected,
     mode: state.mode,
+    dbConnected: state.dbConnected,
   };
 }
 
@@ -58,6 +61,14 @@ export function setMode(mode: "live" | "warmup"): void {
   state.mode = mode;
 }
 
+/**
+ * Set DB connection status. `null` means DB is disabled (DATABASE_URL
+ * unset); `true`/`false` reflect last-known operational state.
+ */
+export function setDbConnected(connected: boolean | null): void {
+  state.dbConnected = connected;
+}
+
 export function recordEvent(at: Date = new Date()): void {
   state.count += 1;
   state.lastEventAt = at.toISOString();
@@ -69,4 +80,5 @@ export function _resetForTests(): void {
   state.count = 0;
   state.connected = false;
   state.mode = "warmup";
+  state.dbConnected = null;
 }

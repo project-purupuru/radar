@@ -51,4 +51,11 @@ export interface IndexerHealth {
   count: number;
   connected: boolean;
   mode: "live" | "warmup";
+  /**
+   * Backup Postgres status. `null` when DATABASE_URL is unset (DB
+   * disabled — running ring-buffer-only). `true` after a successful
+   * query within the last interaction; `false` if any write/query
+   * has failed since the last success.
+   */
+  dbConnected: boolean | null;
 }

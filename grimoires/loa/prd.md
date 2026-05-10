@@ -248,7 +248,7 @@ Service SHALL read configuration from environment variables. No hard-coded URLs 
 
 ### Phase 1 / post-hackathon
 
-- D-1: Persistence layer (Postgres + Prisma or Drizzle)
+- ~~D-1: Persistence layer~~ — **PARTIALLY pulled forward 2026-05-10** (scope amendment by zerker for mid-flight resilience). Optional minimal Postgres backup shipped: `src/db.ts` + single `mint_activity` table + raw `pg` library (no ORM, no migration framework). DB is BACKUP only — `/events/recent` always reads from ring buffer. `DATABASE_URL` absent → no-op. The full ORM/migrations/multi-table version is still post-hackathon.
 - D-2: Mainnet endpoint switch + program ID per env
 - D-3: Multi-program indexing (other purupuru anchor programs as they ship)
 - D-4: SSE / WebSocket push for real-time consumers

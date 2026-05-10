@@ -21,8 +21,10 @@ import { fileURLToPath } from "node:url";
 import type { Idl } from "@coral-xyz/anchor";
 import { serve } from "@hono/node-server";
 import { createConnection, disconnect, getProgramId, subscribeToLogs } from "./client.js";
+import { initDb, loadRecentFromDb, shutdownDb } from "./db.js";
 import * as health from "./health.js";
 import { startLivenessLoop } from "./reconnect.js";
+import { pushIfNew } from "./ring-buffer.js";
 import { app } from "./server.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +38,22 @@ function loadIdl(): Idl {
 
 async function bootIndexer() {
   const idl = loadIdl();
+
+  // 1. Optional DB init (DB-1 scope amendment). No-op if DATABASE_URL
+  //    unset; ring-buffer-only behavior preserved.
+  const dbReady = await initDb();
+
+  // 2. Hydrate ring buffer from DB BEFORE subscribing — survives
+  //    radar restarts / Railway redeploys without losing demo events.
+  if (dbReady) {
+    const historical = await loadRecentFromDb(200);
+    // DB rows arrive newest-first; reverse so push order is oldest-first
+    // and ring-buffer.recent() returns them in correct chronological order.
+    for (const a of historical.reverse()) pushIfNew(a);
+    console.log(`[radar] hydrated ring buffer with ${historical.length} historical events from DB`);
+  }
+
+  // 3. Subscribe to live logs.
   const connection = createConnection();
   const programId = getProgramId();
   const subscription = await subscribeToLogs(connection, programId, idl);
@@ -82,6 +100,7 @@ async function main() {
         console.error("[radar] shutdown error:", err);
       }
     }
+    await shutdownDb();
     server.close((err) => {
       if (err) console.error("[radar] server close error:", err);
       process.exit(0);
