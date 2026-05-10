@@ -45,3 +45,18 @@ compaction:
 # =============================================================================
 integrations:
   - github
+
+# =============================================================================
+# Run Mode (autonomous sprint execution)
+# =============================================================================
+run_mode:
+  enabled: true
+  defaults:
+    max_cycles: 20
+    timeout_hours: 8
+  sprint_plan:
+    branch_prefix: "feature/"
+    default_branch_name: "v0-indexer"
+    consolidate_pr: true
+    commit_prefix: "feat"
+    include_commits_by_sprint: true
