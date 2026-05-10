@@ -44,17 +44,43 @@ In active development for Solana Frontier hackathon (ship 2026-05-11).
 
 ```bash
 pnpm install
-cp .env.example .env  # edit if needed
-pnpm dev              # starts Hono server on :3000 (indexer subscription disabled by default)
+pnpm dev              # boots Hono server on :3000 + Solana subscription
 ```
 
-## API surface (planned)
+Tail `/health` for boot progress. `mode: "warmup"` flips to `"live"` once
+the indexer subscription connects (~1-3s). Mock-locally without devnet by
+setting `INDEXER_PROGRAM_ID=11111111111111111111111111111111` (system
+program — produces no `StoneClaimed` events but won't error).
+
+### HTTP API (live)
 
 | Endpoint | Returns |
 |---|---|
-| `GET /health` | `{ status, service, indexerStarted, lastEventAt, count, connected }` |
-| `GET /events/recent` | `[{ signature, slot, blockTime, wallet, element, weather, mint, logIndex }, ...]` (last N events from ring buffer) |
-| `GET /events/count` | `{ count }` (raw counter for sanity checks) |
+| `GET /` | text banner |
+| `GET /health` | `IndexerHealth` — `{ status, service, version, indexerStarted, lastEventAt, count, connected, mode }` |
+| `GET /events/recent?limit=N` | `{ events: MintActivity[] }` newest-first, `limit` defaults to 50, clamps at `BUFFER_SIZE=200` |
+| `GET /events/count` | `{ count, bufferSize }` raw counter (includes dedup-rejects) + current buffer occupancy |
+
+### Local smoke (sprint task E1)
+
+```bash
+# In one terminal:
+pnpm dev
+
+# In another:
+curl -s http://localhost:3000/                            # → text banner
+curl -s http://localhost:3000/health           | jq        # → IndexerHealth
+curl -s http://localhost:3000/events/recent    | jq        # → { events: [] } until first claim
+curl -s 'http://localhost:3000/events/recent?limit=5' | jq # → ≤5 newest events
+curl -s http://localhost:3000/events/count     | jq        # → { count, bufferSize }
+
+# CORS verification (sprint task E3):
+CORS_ORIGIN=https://example.com pnpm dev   # restart with a locked-down origin
+curl -i -H "Origin: https://example.com" http://localhost:3000/health
+# → response includes:  Access-Control-Allow-Origin: https://example.com
+curl -i -H "Origin: https://elsewhere.com" http://localhost:3000/health
+# → response omits Access-Control-Allow-Origin (or denies preflight)
+```
 
 ## Project planning
 
