@@ -1,20 +1,75 @@
 # HANDOFF · radar v0 indexer
 
-> **For zerker** — autonomously prepared 2026-05-09 evening. Welcome back.
+> **For zerker** — supersedes earlier handoff. Phases A–F shipped autonomously 2026-05-09 evening on branch `feature/v0-indexer`. Phase G is the HITL boundary.
 
-## TL;DR
+## Post-/run-sprint-plan state · 2026-05-09 evening
 
-Repo bootstrapped. Loa mounted. PRD + SDD + sprint plan all written. IDL drafted. Ready for `/run sprint-plan` to take it from here.
+Branch: `feature/v0-indexer` (5 commits ahead of `main`). Consolidated PR draft pending — see "Your next moves" §1.
 
-**Your one command when you're back:**
-```bash
-cd /Users/albert/Documents/GitHub/radar
-claude
-# inside Claude Code:
-/run sprint-plan
-```
+### What landed (autonomous)
 
-That dispatches the harness against `grimoires/loa/sprint.md`, which derives the task graph, populates beads, and runs `/implement` → `/review-sprint` → `/audit-sprint` for each phase with circuit breaker protection. Approximate runtime: 6-12h of autonomous coding + your check-ins at HITL gates.
+| Phase | Tasks | State |
+|---|---|---|
+| A · scaffold | A1 branch · A2 IDL provenance · A3 element=u8 confirmed · A4 spike PARTIAL · A6 smoke build | ✅ green; A4 partial documented |
+| B · indexer core | B1 types · B2 ring-buffer · B3 adapter · B4 health · B5 client · B6 reconnect | ✅ all 6 modules typecheck-clean |
+| C · boot + server + runbook | C1 server.ts · C2 index.ts boot · C3 runbook (pre-existing) | ✅ HTTP-first boot, graceful shutdown |
+| E · local API smoke | E1 curl all 4 routes · E2 ?limit clamp · E3 CORS gating | ✅ verified locally |
+| F · tests | F1 adapter (13) · F2 ring-buffer (7) · F3 reconnect integration (5) · F4 malformed (3) · F5 gate | ✅ 28/28 passing — target was ≥18 |
+
+### Sprint goal coverage
+
+| Goal | DoD | Status |
+|---|---|---|
+| **G-1** live event surface ≤30s | DoD-1 | 🟡 pending live-event verification (Phase G) |
+| **G-2** demo-day failure-mode survival | DoD-4 | ✅ reconnect tested (5 integration tests); 🟡 Railway WS-kill pending Phase G |
+| **G-3** clean HTTP API contract | DoD-3 | ✅ all 4 routes verified locally |
+
+### What did NOT land (Phase G boundary — needs HITL)
+
+| Task | Why blocked |
+|---|---|
+| **A5** Railway plan tier confirmation | Needs zerker login to railway.app. Runbook (`docs/RAILWAY_PROCEDURE.md` §2) walks through it. |
+| **G1** Railway service create + initial deploy | Needs zerker Railway auth. Runbook §1 has the full first-deploy steps. |
+| **G2** UptimeRobot setup | Conditional on A5 → if Free/Hobby. Runbook §2. |
+| **G3** Devnet rate-limit headroom probe | Needs the deployed service running for 30 min. After G1. |
+| **G4** T-1 dry-run | Needs zksoju to trigger a fresh devnet claim. Coordinate 2026-05-10 afternoon. |
+| **G5** Manual WS-kill recovery test | Tweak `SOLANA_WS_URL` to broken endpoint on Railway, verify recovery. After G1. |
+| **G6** Demo-morning warmup | 2026-05-11 ≥30 min pre-record. Runbook §3. |
+| **G.E2E** Final end-to-end goal validation | After G4 + G5. |
+
+**A4 hard gate is PARTIAL**: `scripts/verify-parser-shape.ts` was written and run against devnet, but no `StoneClaimed` event has fired on devnet yet (only program upgrades + 1 `VerifySignedMessage`). Phase B was implemented against the Rust-source-derived Candidate A shape with an adapter runtime guard that throws on shape drift. **Re-run `pnpm tsx scripts/verify-parser-shape.ts` immediately after the first live claim** — it'll capture the actual shape and either confirm Candidate A or surface drift loudly. See `src/idl/PROVENANCE.md` § "A4 spike status" for full detail.
+
+### Your next moves
+
+1. **Push and review the consolidated PR**: 5 commits on `feature/v0-indexer`. Inspect, then merge or request changes.
+   ```bash
+   git push -u origin feature/v0-indexer
+   gh pr view  # auto-created or use `gh pr create`
+   ```
+2. **Complete A5 + G1**: Sign in to Railway, confirm plan tier, deploy the service. Both are walked through in `docs/RAILWAY_PROCEDURE.md`. Estimated 15-30 min.
+3. **G2 (UptimeRobot)** if A5 = Free/Hobby. ~10 min.
+4. **G4 prep**: ping zksoju to confirm 2026-05-10 afternoon availability for T-1 dry-run trigger.
+5. **Re-run A4 spike** after the first live claim (during T-1 dry-run): `pnpm tsx scripts/verify-parser-shape.ts` — verifies Candidate A shape against real EventParser output. If anything mismatches, `src/types.ts:RawStoneClaimed` + `src/adapter.ts` need adjustment before the demo.
+6. **G5 WS-kill test**: after G1, follow runbook §5 Tier 2 to swap `SOLANA_WS_URL` to a broken endpoint, verify the reconnect loop catches it within ~60s, restore.
+7. **G6 + G.E2E**: 2026-05-11 morning, follow runbook §3 + §7.
+
+### Operating notes
+
+- `pnpm dev` boots HTTP server on `:3000` AND subscribes to devnet (free tier). Use `PORT=3xxx` to avoid clashes.
+- Tests pass `pnpm test` clean (28/28). Vitest config inlines `@solana/web3.js` deps to work around an `rpc-websockets` CJS/ESM clash.
+- `pnpm typecheck && pnpm test && pnpm lint` is the F5 gate — should stay green on `main` after PR merge.
+- A6 added a `pnpm copy-idl` step to the build (`tsc && pnpm copy-idl`) so `dist/idl/purupuru_anchor.json` exists at runtime.
+
+### Risks newly surfaced this run
+
+- **R-15a confirmed unaddressed**: until A5 + G2 close, Railway sleep is the highest-probability demo-day failure. Free-tier signup at uptimerobot.com is ~5 min if needed.
+- **R-16 still partial**: A4 couldn't validate against a live event. The runtime guard in `src/adapter.ts` catches drift loudly but only after a real event fires. Re-run A4 at T-1.
+
+---
+
+## Original handoff (planning phase) — preserved below
+
+> Original handoff context — the work above superseded most of this. Kept for the audit trail.
 
 ---
 
