@@ -1,6 +1,33 @@
 # HANDOFF · radar v0 indexer
 
-> **For zerker** — supersedes earlier handoff. Phases A–F shipped autonomously 2026-05-09 evening on branch `feature/v0-indexer`. Phase G is the HITL boundary.
+> **For zerker** — supersedes earlier handoffs. Phases A-F + DB-1 + G1/G3/G4/G5 shipped and verified end-to-end against live devnet events on 2026-05-10. Only G6 (demo-morning warmup) and G.E2E (final goal validation) remain — both pure timing tasks for 2026-05-11 AM.
+
+## Post-Phase-G status · 2026-05-10 evening
+
+Production deploy: **https://radar-production-8f2f.up.railway.app** (Railway Pro, no UptimeRobot needed).
+
+**End-to-end pipeline VERIFIED in production** — zksoju fired 3 real `StoneClaimed` events on devnet (sigs `TZmPjHXiFUvF…`, `5KdZ7hoPpEz1…`, `5wK6KPbabuFk…`); radar received all 3 via live WS subscription, decoded them through EventParser + adapter, stored in ring buffer + Postgres, served via `/events/recent`. **A4 hard gate is officially closed.** Candidate A shape (element/weather as `u8`, wallet/mint as PublicKey objects) matches live EventParser output exactly.
+
+**Boot-warmup verified twice in production** — radar restart loaded 3 historical events from Postgres into the ring buffer on boot, before WS subscription started. Demo-day mid-flight resilience is no longer theoretical.
+
+### G5 finding (documented, not blocking)
+
+Silent WS-only death (HTTPS healthy, WS broken) is NOT caught by the dead-man timer — `connected: true` remains misleading. Operator signal exists in Railway logs (`ws error: getaddrinfo …`). Demo-day procedure: watch `/health.count` AND `/events/recent` AND Railway logs in parallel. Post-hackathon: add `wsErrors` counter to `/health` (5-line hook) OR add a control subscription to a known-busy program. See `grimoires/loa/NOTES.md` Technical Debt section for full detail.
+
+## Tomorrow morning (2026-05-11)
+
+Two tasks remain, both gated on demo timing:
+
+- **G6 demo-morning warmup** — ≥30 min pre-record, follow `docs/RAILWAY_PROCEDURE.md` §3 (curl-loop on `/health`, confirm `connected: true`, `mode: live`, `dbConnected: true`)
+- **G.E2E final goal validation** — right before recording, run `pnpm tsx scripts/watch-events.ts` in a terminal; when zksoju fires the pre-demo claim batch, watch for the `🎯 N NEW EVENTS` line within 30s of trigger; confirm `/events/recent` updated; observatory FE renders the new row
+
+Pre-staged: Helius free API key (for R-13 escape hatch if devnet RPC flakes mid-recording).
+
+---
+
+## Original handoff state (post-Phase-F, pre-deploy)
+
+> Snapshot from 2026-05-09 evening. Superseded above but kept for audit trail.
 
 ## Post-/run-sprint-plan state · 2026-05-09 evening
 
